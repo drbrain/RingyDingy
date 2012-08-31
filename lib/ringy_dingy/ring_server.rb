@@ -48,7 +48,19 @@ class RingyDingy::RingServer
 
   attr_reader :verbose
 
-  RF = Rinda::RingFinger.new
+  ##
+  # The Rinda::TupleSpace where services are registered
+
+  attr_reader :service_registry
+
+  @ring_finger = Rinda::RingFinger.new
+
+  class << self
+    ##
+    # Overrides the Rinda::RingFinger used for class methods.
+
+    attr_accessor :ring_finger
+  end
 
   ##
   # Return a collection of all remote DRb services.
@@ -63,7 +75,7 @@ class RingyDingy::RingServer
 
     services = {}
 
-    RF.lookup_ring do |ts|
+    @ring_finger.lookup_ring do |ts|
       services[ts.__drburi] = ts.read_all [:name, nil, DRbObject, nil]
     end
 
@@ -98,7 +110,7 @@ class RingyDingy::RingServer
   def self.set_verbose(boolean)
     DRb.start_service unless DRb.primary_server
 
-    RF.lookup_ring do |ts|
+    @ring_finger.lookup_ring do |ts|
       ts.write [:RingyDingy, :verbose, boolean]
     end
   end
@@ -110,40 +122,40 @@ class RingyDingy::RingServer
     options = {}
     options[:Verbose] = false
 
-    op = OptionParser.new do |op|
-      op.program_name = 'ring_server'
-      op.version = RingyDingy::VERSION
-      op.release = nil
+    op = OptionParser.new do |opt|
+      opt.program_name = 'ring_server'
+      opt.version = RingyDingy::VERSION
+      opt.release = nil
 
-      op.banner = "Usage: #{name} [options]"
-      op.separator ''
-      op.separator 'Run, find, or modify the behavior of a Rinda::RingServer.'
-      op.separator ''
-      op.separator 'With no arguments a Rinda::RingServer is started and runs in the foreground.'
-      op.separator ''
+      opt.banner = "Usage: #{name} [options]"
+      opt.separator ''
+      opt.separator 'Run, find, or modify the behavior of a Rinda::RingServer.'
+      opt.separator ''
+      opt.separator 'With no arguments a Rinda::RingServer is started and runs in the foreground.'
+      opt.separator ''
 
-      op.separator 'RingServer options:'
-      op.on("-d", "--daemon",
-            "Run a RingServer as a daemon") do |val|
+      opt.separator 'RingServer options:'
+      opt.on("-d", "--daemon",
+             "Run a RingServer as a daemon") do |val|
         options[:Daemon] = val
       end
 
-      op.on("-v", "--verbose",
-            "Enable verbose mode") do |val|
+      opt.on("-v", "--verbose",
+             "Enable verbose mode") do |val|
         options[:Verbose] = val
       end
 
-      op.separator ''
-      op.separator 'Miscellaneous options:'
+      opt.separator ''
+      opt.separator 'Miscellaneous options:'
 
-      op.on("-l", "--list",
-            "List services on available RingServers") do |val|
+      opt.on("-l", "--list",
+             "List services on available RingServers") do |val|
         options[:List] = val
       end
 
-      op.on(      "--set-verbose=BOOLEAN", TrueClass,
-            "Enable or disable verbose mode on available",
-            "RingServers (except daemon RingServers)") do |val|
+      opt.on(      "--set-verbose=BOOLEAN", TrueClass,
+             "Enable or disable verbose mode on available",
+             "RingServers (except daemon RingServers)") do |val|
         options[:SetVerbose] = val
       end
     end
@@ -196,8 +208,8 @@ class RingyDingy::RingServer
   # [:Verbose] In verbose mode service registrations and expirations are
   #            logged to $stderr.
 
-  def initialize(options)
-    @ts = Rinda::TupleSpace.new
+  def initialize options = {}
+    @service_registry = Rinda::TupleSpace.new
 
     @registrations = nil
     @expirations = nil
@@ -224,8 +236,8 @@ class RingyDingy::RingServer
   def enable_activity_logging
     log 'registration and expiration logging enabled'
 
-    @registrations = @ts.notify 'write', [:name, nil, DRbObject, nil]
-    @expirations = @ts.notify 'delete', [:name, nil, DRbObject, nil]
+    @registrations = @service_registry.notify 'write', [:name, nil, DRbObject, nil]
+    @expirations = @service_registry.notify 'delete', [:name, nil, DRbObject, nil]
 
     Thread.start do
       @registrations.each do |(_,t)|
@@ -256,7 +268,7 @@ class RingyDingy::RingServer
   def monitor_verbose
     Thread.start do
       loop do
-        self.verbose = @ts.take([:RingyDingy, :verbose, nil])[2]
+        self.verbose = @service_registry.take([:RingyDingy, :verbose, nil])[2]
       end
     end
   end
@@ -271,7 +283,7 @@ class RingyDingy::RingServer
 
     monitor_verbose
 
-    Rinda::RingServer.new @ts
+    Rinda::RingServer.new @service_registry
 
     DRb.thread.join
   end

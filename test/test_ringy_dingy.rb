@@ -32,7 +32,9 @@ class StubRingServer
   end
 
   def read_all(template)
-    @tuples.map { |t,r| t }.select { |t| t[1] == template[1] }
+    @tuples.map { |t,r| t }.select do |t|
+      template[1].nil? or t[1] == template[1]
+    end
   end
 
 end
@@ -56,6 +58,37 @@ class TestRingyDingy < Test::Unit::TestCase
 
     @stub_ring_server = StubRingServer.new
     @ringy_dingy.ring_server = @stub_ring_server
+  end
+
+  def test_class_find
+    orig_ring_finger = Rinda::RingFinger
+    ring_finger = Object.new
+
+    Rinda.send :remove_const, :RingFinger
+    Rinda.const_set :RingFinger, ring_finger
+
+    def ring_finger.new broadcast_list
+      @broadcast_list = broadcast_list
+      self
+    end
+
+    def ring_finger.lookup_ring
+      ts = StubRingServer.new
+      def ts.__drburi() end
+
+      service = Object.new
+      def service.method_missing(*) end
+
+      ts.write [:name, :service, service, nil], nil
+
+      yield ts
+    end
+
+    RingyDingy.find :service
+
+  ensure
+    Rinda.send :remove_const, :RingFinger
+    Rinda.const_set :RingFinger, orig_ring_finger
   end
 
   def test_identifier

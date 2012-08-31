@@ -21,14 +21,11 @@ end
 
 class RingyDingy::RingServer
 
-  attr_accessor :expirations, :registrations, :ts
-  attr_reader :verbose
+  attr_accessor :expirations, :registrations
 
-  remove_const :RF
+  @ring_finger = Object.new
 
-  RF = Object.new
-
-  def RF.lookup_ring
+  def @ring_finger.lookup_ring
     ts1 = FakeTupleSpace.new
     ts1.__drburi = 'druby://localhost:10000'
     ts1.read_all = TestRingServer::SERVICES[ts1.__drburi]
@@ -98,8 +95,7 @@ class TestRingServer < MiniTest::Unit::TestCase
       yield fts
     end
 
-    RingyDingy::RingServer.send :remove_const, :RF
-    RingyDingy::RingServer.send :const_set, :RF, rf
+    RingyDingy::RingServer.ring_finger = rf
 
     out, err = capture_io do
       RingyDingy::RingServer.print_services
@@ -120,9 +116,6 @@ Services on druby://localhost:10002
 
     assert_equal expected, out
     assert_equal '', err
-  ensure
-    RingyDingy::RingServer.send :remove_const, :RF
-    RingyDingy::RingServer.send :const_set, :RF, Rinda::RingFinger
   end
 
   def test_initialize_verbose_daemon
@@ -131,10 +124,10 @@ Services on druby://localhost:10002
   end
 
   def test_disable_activity_logging
-    @rs.registrations = @rs.ts.notify 'write', [nil]
-    @rs.expirations = @rs.ts.notify 'delete', [nil]
+    @rs.registrations = @rs.service_registry.notify 'write', [nil]
+    @rs.expirations = @rs.service_registry.notify 'delete', [nil]
 
-    out, err = capture_io do
+    _, err = capture_io do
       @rs.disable_activity_logging
     end
 
@@ -148,24 +141,24 @@ Services on druby://localhost:10002
     @rs.registrations.cancel
     @rs.expirations.cancel
 
-    out, err = capture_io do
+    capture_io do
       @rs.enable_activity_logging
-      @rs.ts.write [:name, :Test, DRbObject.new(self), ''], 0
+      @rs.service_registry.write [:name, :Test, DRbObject.new(self), ''], 0
     end
 
     assert_equal true, @rs.registrations.alive?
     assert_equal true, @rs.expirations.alive?
 
-    expected = <<-EOF
-registration and expiration logging enabled
-registered :Test, ""
-\tURI: #{DRb.uri} ref: #{self.object_id}
-expired :Test, ""
-\tURI: #{DRb.uri} ref: #{self.object_id}
-    EOF
+#    expected = <<-EOF
+#registration and expiration logging enabled
+#registered :Test, ""
+#\tURI: #{DRb.uri} ref: #{self.object_id}
+#expired :Test, ""
+#\tURI: #{DRb.uri} ref: #{self.object_id}
+#    EOF
 
     # HACK: apparently this is going to a totally different IO on 1.9
-    # assert_equal expected, err
+    #assert_equal expected, err
   end
 
   def disabled_test_monitor_verbose

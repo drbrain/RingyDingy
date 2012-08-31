@@ -21,7 +21,7 @@ $TESTING = false unless defined? $TESTING
 
 class RingyDingy
 
-  VERSION = '1.2.1'
+  VERSION = '1.3'
 
   ##
   # Interval to check the RingServer for our registration information.
@@ -40,25 +40,65 @@ class RingyDingy
   attr_reader :thread
 
   if $TESTING then
-    attr_accessor :ring_finger, :renewer, :thread # :nodoc:
-    attr_writer :ring_server # :nodoc:
+    attr_accessor :ring_finger, :renewer # :nodoc:
+    attr_writer :ring_server, :thread # :nodoc:
+  end
+
+  ##
+  # Lists of hosts to search for ring servers.  By default includes the subnet
+  # broadcast address and localhost.
+
+  BROADCAST_LIST = %w[<broadcast> localhost]
+
+  ##
+  # Finds the first live service matching +service_name+ on any ring server.
+  # Ring servers are discovered via the +broadcast_list+.
+
+  def self.find service_name, broadcast_list = BROADCAST_LIST
+    DRb.start_service unless DRb.primary_server
+    rf = Rinda::RingFinger.new broadcast_list
+
+    services = {}
+
+    rf.lookup_ring do |ts|
+      services[ts.__drburi] = ts.read_all [:name, nil, DRbObject, nil]
+    end
+
+    services.each do |_, tuples|
+      tuples.each do |_, found_service_name, service|
+        begin
+          next unless found_service_name == service_name
+
+          service.method_missing :object_id # ping service for liveness
+
+          return service
+        rescue DRb::DRbConnError
+          next
+        rescue NoMethodError
+          next
+        end
+      end
+    end
+
+    raise "unable to find service #{service_name.inspect}"
   end
 
   ##
   # Creates a new RingyDingy that registers +object+ as +service+ with
   # optional identifier +name+.
 
-  def initialize(object, service = :RingyDingy, name = nil)
+  def initialize object, service = :RingyDingy, name = nil,
+                 broadcast_list = BROADCAST_LIST
     DRb.start_service unless DRb.primary_server
 
     @identifier = [Socket.gethostname.downcase, $PID, name].compact.join '_'
     @object = object
     @service = service || :RingyDingy
 
-    @check_every = 180
+    @check_every = 15
     @renewer = Rinda::SimpleRenewer.new
 
-    @ring_finger = Rinda::RingFinger.new
+    @ring_finger = Rinda::RingFinger.new broadcast_list
     @ring_server = nil
 
     @thread = nil
@@ -110,6 +150,8 @@ class RingyDingy
         sleep @check_every
       end
     end
+
+    self
   end
 
   ##
