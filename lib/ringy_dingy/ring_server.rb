@@ -87,6 +87,8 @@ class RingyDingy::RingServer
   # stdout.
 
   def self.print_services
+    DRb.start_service unless DRb.primary_server
+
     out = []
     list_services.each do |ring_server, services|
       out << "Services on #{ring_server}"
@@ -169,8 +171,6 @@ class RingyDingy::RingServer
   # Run appropriately.
 
   def self.run(args = ARGV)
-    DRb.start_service unless DRb.primary_server
-
     options = process_args args
 
     if options.include? :List then
@@ -216,8 +216,8 @@ class RingyDingy::RingServer
 
     @daemon = options[:Daemon]
 
-    @verbose = false
-    self.verbose = options[:Verbose] and not @daemon
+    @verbose = true
+    #self.verbose = options[:Verbose] and not @daemon
   end
 
   ##
