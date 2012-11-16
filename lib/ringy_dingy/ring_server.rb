@@ -274,7 +274,7 @@ class RingyDingy::RingServer
   end
 
   ##
-  # Starts a new RingServer::RingyDingy.
+  # Starts a new RingyDingy::RingServer.
 
   def run
     DRb.start_service unless DRb.primary_server
