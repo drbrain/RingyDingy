@@ -35,6 +35,11 @@ class RingyDingy
   attr_reader :identifier
 
   ##
+  # The object being provided by RingyDingy
+
+  attr_reader :object
+
+  ##
   # RingyDingy run loop thread.
 
   attr_reader :thread
@@ -136,12 +141,23 @@ class RingyDingy
   ##
   # Starts a thread that checks for a registration tuple every #check_every
   # seconds.
+  #
+  # If +wait+ is +:none+ (the default) run returns immediately.  If +wait+ is
+  # +:first_register+ then run blocks until the service was successfully
+  # registered.
 
-  def run
+  def run wait = :none
+    mutex = Mutex.new
+    service_registered = ConditionVariable.new
+
     @thread = Thread.start do
       loop do
         begin
           register unless registered?
+
+          mutex.synchronize do
+            service_registered.signal
+          end if wait == :first_register
         rescue DRb::DRbConnError
           @ring_server = nil
         rescue RuntimeError => e
@@ -150,6 +166,10 @@ class RingyDingy
         sleep @check_every
       end
     end
+
+    mutex.synchronize do
+      service_registered.wait mutex
+    end if wait == :first_register
 
     self
   end
