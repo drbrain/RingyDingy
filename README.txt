@@ -28,11 +28,11 @@ Just install the gem:
   require 'rubygems'
   require 'ringy_dingy'
   require 'my_drb_service'
-  
+
   my_drb_service = MyDRbService.new
-  
+
   RingyDingy.new(my_drb_service).run
-  
+
   DRb.thread.join
 
 == Using RingyDingy::RingServer
