@@ -1,7 +1,7 @@
-History.txt
-LICENSE.txt
+History.rdoc
+LICENSE.rdoc
 Manifest.txt
-README.txt
+README.rdoc
 Rakefile
 bin/ring_server
 lib/ringy_dingy.rb
