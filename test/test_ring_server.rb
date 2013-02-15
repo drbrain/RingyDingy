@@ -120,7 +120,7 @@ Services on druby://localhost:10002
 
   def test_initialize_verbose_daemon
     rs = RingyDingy::RingServer.new :Verbose => true, :Daemon => true
-    assert_equal false, rs.verbose
+    assert rs.verbose
   end
 
   def test_disable_activity_logging
@@ -183,7 +183,7 @@ Services on druby://localhost:10002
   end
 
   def test_verbose_equals_no_change
-    assert_equal true, @rs.verbose
+    assert @rs.verbose
 
     out, err = capture_io do
       @rs.verbose = true
@@ -202,18 +202,6 @@ Services on druby://localhost:10002
 
     assert_equal '', out
     assert_equal "registration and expiration logging enabled\n", err
-  end
-
-  def test_verbose_equals_true_daemon
-    @rs.instance_variable_set :@daemon, true
-    capture_io do @rs.verbose = false end
-
-    out, err = capture_io do
-      @rs.verbose = true
-    end
-
-    assert_equal '', out
-    assert_equal '', err
   end
 
 end

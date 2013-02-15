@@ -176,6 +176,8 @@ class RingyDingy::RingServer
     if options.include? :List then
       print_services
       exit
+    elsif options.include? :SetVerbose and options.include? :Daemon then
+      abort '--daemon with --verbose sends output to /dev/null'
     elsif options.include? :SetVerbose then
       set_verbose options[:SetVerbose]
       exit
@@ -216,8 +218,8 @@ class RingyDingy::RingServer
 
     @daemon = options[:Daemon]
 
-    @verbose = true
-    #self.verbose = options[:Verbose] and not @daemon
+    @verbose = nil
+    self.verbose = options[:Verbose] and not @daemon
   end
 
   ##
@@ -292,7 +294,7 @@ class RingyDingy::RingServer
   # Sets verbose to +value+ when @daemon is not true.
 
   def verbose=(value)
-    return if @daemon or @verbose == value
+    return if @verbose == value
     @verbose = value
     @verbose ? enable_activity_logging : disable_activity_logging
     @verbose
