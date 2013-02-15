@@ -11,6 +11,9 @@ Hoe.spec 'RingyDingy' do |p|
   self.licenses << 'BSD-3-Clause'
   self.testlib = :minitest
 
+  rdoc_locations <<
+    'docs.seattlerb.org:/data/www/docs.seattlerb.org/RingyDingy/'
+
   p.extra_dev_deps << ['ZenTest', '~> 4.8']
 end
 

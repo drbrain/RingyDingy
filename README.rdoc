@@ -1,7 +1,7 @@
 = RingyDingy
 
 home :: https://github.com/drbrain/RingyDingy
-rdoc :: http://docs.seattlerb.org/rdoc
+rdoc :: http://docs.seattlerb.org/RingyDingy
 bugs :: https://github.com/drbrain/RingyDingy/issues
 
 == DESCRIPTION
