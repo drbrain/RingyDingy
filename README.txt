@@ -1,6 +1,8 @@
 = RingyDingy
 
-* http://rubyforge.org/projects/seattlerb
+home :: https://github.com/drbrain/RingyDingy
+rdoc :: http://docs.seattlerb.org/rdoc
+bugs :: https://github.com/drbrain/RingyDingy/issues
 
 == DESCRIPTION
 
