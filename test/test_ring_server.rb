@@ -103,15 +103,15 @@ class TestRingServer < MiniTest::Unit::TestCase
 
     expected = <<-EOF
 Services on druby://localhost:10000
-\t:RingyDingy, "localhost_9607_obj0"
-\t\tURI: druby://localhost:10001 ref: #{OBJ0.object_id}
+  :RingyDingy, "localhost_9607_obj0"
+    URI: druby://localhost:10001 ref: #{OBJ0.object_id}
 
-\t:RingyDingy, "localhost_9607_obj1"
-\t\tURI: druby://localhost:10001 ref: #{OBJ1.object_id}
+  :RingyDingy, "localhost_9607_obj1"
+    URI: druby://localhost:10001 ref: #{OBJ1.object_id}
 
 Services on druby://localhost:10002
-\t:RingyDingy, "localhost_9607_obj2"
-\t\tURI: druby://localhost:10003 ref: #{OBJ2.object_id}
+  :RingyDingy, "localhost_9607_obj2"
+    URI: druby://localhost:10003 ref: #{OBJ2.object_id}
     EOF
 
     assert_equal expected, out
