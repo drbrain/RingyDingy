@@ -21,7 +21,10 @@ $TESTING = false unless defined? $TESTING
 
 class RingyDingy
 
-  VERSION = '1.3'
+  ##
+  # The version of RingyDingy you are using
+
+  VERSION = '1.4'
 
   ##
   # Interval to check the RingServer for our registration information.
@@ -130,12 +133,27 @@ class RingyDingy
     return false
   end
 
-  ##
-  # Looks up the primary Rinde::RingServer.
+  if RUBY_VERSION >= '2' then
+    ##
+    # Looks up the primary Rinde::RingServer.
 
-  def ring_server
-    return @ring_server unless @ring_server.nil?
-    @ring_server = @ring_finger.lookup_ring_any
+    def ring_server
+      return @ring_server unless @ring_server.nil?
+      @ring_server = @ring_finger.lookup_ring_any
+    end
+  else
+    ##
+    # Work around [ruby-talk:395364]
+
+    def ring_server # :nodoc:
+      require 'timeout'
+      Timeout.timeout 5 do
+        return @ring_server unless @ring_server.nil?
+        @ring_server = @ring_finger.lookup_ring_any
+      end
+    rescue Timeout::Error
+      raise 'RingNotFound'
+    end
   end
 
   ##
