@@ -93,11 +93,13 @@ class RingyDingy::RingServer
     list_services.each do |ring_server, services|
       out << "Services on #{ring_server}"
 
-      values = services.sort_by { |s| [s[2].__drburi, -s[2].__drbref] }
+      values = services.sort_by do |_, name, service,|
+        [name.to_s, service.__drburi, -service.__drbref]
+      end
 
-      values.each do |s|
-        out << "\t%p, %p\n\t\tURI: %s ref: %d" %
-               [s[1], s[3], s[2].__drburi, s[2].__drbref]
+      values.each do |_, name, service, description|
+        out << "  %p, %p\n    URI: %s ref: %d" %
+               [name, description, service.__drburi, service.__drbref]
         out << nil
       end
     end
