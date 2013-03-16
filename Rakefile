@@ -2,6 +2,7 @@ require 'hoe'
 
 Hoe.plugin :git
 Hoe.plugin :minitest
+Hoe.plugin :travis
 
 Hoe.spec 'RingyDingy' do |p|
   p.developer 'Eric Hodel', 'drbrain@segment7.net'
