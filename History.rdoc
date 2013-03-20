@@ -1,3 +1,8 @@
+=== 1.5
+
+* Added RingyDingy::Lookup. to handle service discovery
+* Added RingyDingy::Lookup#wait_for to handle 
+
 === 1.4 / 2013-03-15
 
 * Work around [ruby-talk:395364] by adding a timeout.

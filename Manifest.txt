@@ -5,6 +5,10 @@ README.rdoc
 Rakefile
 bin/ring_server
 lib/ringy_dingy.rb
+lib/ringy_dingy/cancelable_renewer.rb
+lib/ringy_dingy/lookup.rb
 lib/ringy_dingy/ring_server.rb
 test/test_ring_server.rb
 test/test_ringy_dingy.rb
+test/test_ringy_dingy_cancelable_renewer.rb
+test/test_ringy_dingy_lookup.rb

@@ -1,7 +1,5 @@
 require 'test/unit'
 
-$TESTING = true
-
 require 'ringy_dingy'
 
 class StubRingFinger

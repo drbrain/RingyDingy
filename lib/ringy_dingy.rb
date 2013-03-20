@@ -2,8 +2,6 @@ require 'English'
 require 'drb'
 require 'rinda/ring'
 
-$TESTING = false unless defined? $TESTING
-
 ##
 # RingyDingy registers a DRb service with a Rinda::RingServer and re-registers
 # the service if communication with the Rinda::RingServer is ever lost.
@@ -24,7 +22,7 @@ class RingyDingy
   ##
   # The version of RingyDingy you are using
 
-  VERSION = '1.4'
+  VERSION = '1.5'
 
   ##
   # Interval to check the RingServer for our registration information.
@@ -47,10 +45,8 @@ class RingyDingy
 
   attr_reader :thread
 
-  if $TESTING then
-    attr_accessor :ring_finger, :renewer # :nodoc:
-    attr_writer :ring_server, :thread # :nodoc:
-  end
+  attr_accessor :ring_finger, :renewer # :nodoc:
+  attr_writer :ring_server, :thread # :nodoc:
 
   ##
   # Lists of hosts to search for ring servers.  By default includes the subnet
@@ -63,32 +59,7 @@ class RingyDingy
   # Ring servers are discovered via the +broadcast_list+.
 
   def self.find service_name, broadcast_list = BROADCAST_LIST
-    DRb.start_service unless DRb.primary_server
-    rf = Rinda::RingFinger.new broadcast_list
-
-    services = {}
-
-    rf.lookup_ring do |ts|
-      services[ts.__drburi] = ts.read_all [:name, nil, DRbObject, nil]
-    end
-
-    services.each do |_, tuples|
-      tuples.each do |_, found_service_name, service|
-        begin
-          next unless found_service_name == service_name
-
-          service.method_missing :object_id # ping service for liveness
-
-          return service
-        rescue DRb::DRbConnError
-          next
-        rescue NoMethodError
-          next
-        end
-      end
-    end
-
-    raise "unable to find service #{service_name.inspect}"
+    RingyDingy::Lookup.new(broadcast_list).find service_name
   end
 
   ##
@@ -202,3 +173,5 @@ class RingyDingy
 
 end
 
+require 'ringy_dingy/cancelable_renewer'
+require 'ringy_dingy/lookup'
