@@ -87,9 +87,13 @@ class RingyDingy
   # Registers this service with the primary Rinda::RingServer.
 
   def register
-    ring_server.write [:name, @service, DRbObject.new(@object), @identifier],
-                      @renewer
-    return nil
+    reference = DRb::DRbObject.new(@object)
+
+    tuple = [:name, @service, reference, @identifier]
+
+    ring_server.write tuple, @renewer
+
+    nil
   end
 
   ##
