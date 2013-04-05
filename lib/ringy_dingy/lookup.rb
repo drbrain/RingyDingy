@@ -29,18 +29,18 @@ class RingyDingy::Lookup
   # Ring servers are discovered via the +broadcast_list+.
 
   def find service_name
-    each_tuple_space do |ts|
+    found = each_tuple_space.find do |ts|
       tuples = ts.read_all [:name, nil, DRbObject, nil]
 
-      tuples.each do |_, found_service_name, service|
+      tuples.find do |_, found_service_name, service|
         begin
           next unless found_service_name == service_name
 
-          return service unless DRbObject === service
-
-          service.method_missing :object_id # ping service for liveness
-
-          return service
+          if DRbObject === service then
+            service.method_missing :object_id # ping service for liveness
+          else
+            service
+          end
         rescue DRb::DRbConnError
           next
         rescue NoMethodError
@@ -49,7 +49,9 @@ class RingyDingy::Lookup
       end
     end
 
-    raise "unable to find service #{service_name.inspect}"
+    raise "unable to find service #{service_name.inspect}" unless found
+
+    found
   end
 
   ##
