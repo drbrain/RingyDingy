@@ -29,10 +29,12 @@ class RingyDingy::Lookup
   # Ring servers are discovered via the +broadcast_list+.
 
   def find service_name
-    found = each_tuple_space.find do |ts|
+    found = nil
+
+    each_tuple_space.any? do |ts|
       tuples = ts.read_all [:name, nil, DRbObject, nil]
 
-      tuples.find do |_, found_service_name, service|
+      found = tuples.find do |_, found_service_name, service, _|
         begin
           next unless found_service_name == service_name
 
@@ -51,7 +53,7 @@ class RingyDingy::Lookup
 
     raise "unable to find service #{service_name.inspect}" unless found
 
-    found
+    found[2]
   end
 
   ##
