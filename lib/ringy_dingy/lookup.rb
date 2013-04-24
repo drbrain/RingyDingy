@@ -25,6 +25,17 @@ class RingyDingy::Lookup
   end
 
   ##
+  # Yields each tuple space found in the broadcast list
+
+  def each_tuple_space
+    return enum_for __method__ unless block_given?
+
+    @ring_finger.lookup_ring do |tuple_space|
+      yield tuple_space
+    end
+  end
+
+  ##
   # Continually checks for tuple spaces and yields tuple spaces not previously
   # found.
   #
