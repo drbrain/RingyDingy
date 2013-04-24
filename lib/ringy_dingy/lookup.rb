@@ -100,6 +100,7 @@ class RingyDingy::Lookup
             tuple = tuple_space.read tuple, renewer
             queue.push tuple[2]
           rescue DRb::DRbConnError
+            # HACK this may busy-loop forever depending on connection shutdown
           end
         end
       end
