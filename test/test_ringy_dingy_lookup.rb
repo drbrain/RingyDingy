@@ -9,6 +9,22 @@ class TestRingyDingyLookup < MiniTest::Unit::TestCase
     @lookup = RingyDingy::Lookup.new []
   end
 
+  def test_enumerate_tuple_spaces
+    stub_ring_finger
+
+    items = []
+
+    thread = @lookup.enumerate_tuple_spaces do |ts|
+      items << ts
+    end
+
+    Thread.pass while items.empty?
+
+    refute_empty items
+  ensure
+    thread.kill if thread
+  end
+
   def test_find
     stub_ring_finger
 
@@ -28,14 +44,13 @@ class TestRingyDingyLookup < MiniTest::Unit::TestCase
   def stub_ring_finger
     def (@lookup.ring_finger).lookup_ring
       ts = Rinda::TupleSpace.new
-      yield ts
+      yield DRb::DRbObject.new ts
 
       ro = DRbObject.new Object.new
       ts = Rinda::TupleSpace.new
       ts.write [:name, 'service', ro, 'the service']
-      yield ts
+      yield DRb::DRbObject.new ts
     end
-
   end
 
 end

@@ -25,6 +25,31 @@ class RingyDingy::Lookup
   end
 
   ##
+  # Continually checks for tuple spaces and yields tuple spaces not previously
+  # found.
+  #
+  # Returns a Thread that must be kill to shut down lookup.
+
+  def enumerate_tuple_spaces
+    Thread.start do
+      Thread.current.abort_on_exception = true
+      spaces = {}
+
+      loop do
+        @ring_finger.lookup_ring do |tuple_space|
+          id = [tuple_space.__drburi, tuple_space.__drbref]
+
+          next if spaces[id]
+
+          spaces[id] = true
+
+          yield tuple_space
+        end
+      end
+    end
+  end
+
+  ##
   # Finds the first live service matching +service_name+ on any ring server.
   # Ring servers are discovered via the +broadcast_list+.
 
@@ -57,17 +82,6 @@ class RingyDingy::Lookup
   end
 
   ##
-  # Yields each tuple space found in the broadcast list
-
-  def each_tuple_space
-    return enum_for __method__ unless block_given?
-
-    @ring_finger.lookup_ring do |tuple_space|
-      yield tuple_space
-    end
-  end
-
-  ##
   # Waits until +service_name+ appears on any ring server.  Returns the first
   # service found with that name.
   #
@@ -78,18 +92,23 @@ class RingyDingy::Lookup
     queue   = Queue.new
     renewer = RingyDingy::CancelableRenewer.new
 
-    each_tuple_space do |tuple_space|
+    thread = enumerate_tuple_spaces do |tuple_space|
       Thread.new do
-        tuple = tuple_space.read [:name, service_name, DRbObject, nil], renewer
-        queue.push tuple[2]
+        tuple = [:name, service_name, DRbObject, nil]
+        loop do
+          begin
+            tuple = tuple_space.read tuple, renewer
+            queue.push tuple[2]
+          rescue DRb::DRbConnError
+          end
+        end
       end
     end
 
-    service = queue.pop
-
+    queue.pop
+  ensure
     renewer.cancel
-
-    service
+    thread.kill if thread
   end
 
 end
