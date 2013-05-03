@@ -1,7 +1,7 @@
-=== 1.5
+=== 1.5 / 2013-05-03
 
-* Added RingyDingy::Lookup. to handle service discovery
-* Added RingyDingy::Lookup#wait_for to handle
+* Added RingyDingy::Lookup to handle lookup of services.
+  * Added RingyDingy::Lookup#wait_for to wait on a recently registered service
 
 === 1.4 / 2013-03-15
 
