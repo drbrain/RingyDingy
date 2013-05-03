@@ -36,24 +36,24 @@ class RingyDingy::Lookup
   end
 
   ##
-  # Continually checks for tuple spaces and yields tuple spaces not previously
-  # found.
+  # Continually checks for tuple spaces and yields found tuple spaces.
   #
-  # Returns a Thread that must be kill to shut down lookup.
+  # Returns a Thread that must be killed to shut down lookup:
+  #
+  #   def my_method
+  #     thread = enumerate_tuple_spaces do |tuple_space|
+  #       # ...
+  #     end
+  #   ensure
+  #     thread.kill
+  #   end
 
   def enumerate_tuple_spaces
     Thread.start do
-      Thread.current.abort_on_exception = true
       spaces = {}
 
       loop do
         @ring_finger.lookup_ring do |tuple_space|
-          id = [tuple_space.__drburi, tuple_space.__drbref]
-
-          next if spaces[id]
-
-          spaces[id] = true
-
           yield tuple_space
         end
       end
@@ -101,18 +101,19 @@ class RingyDingy::Lookup
 
   def wait_for service_name
     queue   = Queue.new
-    renewer = RingyDingy::CancelableRenewer.new
+    renewer = nil
 
     thread = enumerate_tuple_spaces do |tuple_space|
+      renewer.cancel if renewer
+      renewer = RingyDingy::CancelableRenewer.new
+
       Thread.new do
-        tuple = [:name, service_name, DRbObject, nil]
-        loop do
-          begin
-            tuple = tuple_space.read tuple, renewer
-            queue.push tuple[2]
-          rescue DRb::DRbConnError
-            # HACK this may busy-loop forever depending on connection shutdown
-          end
+        template = [:name, service_name, DRbObject, nil]
+        begin
+          tuple = tuple_space.read template, renewer
+
+          queue.push tuple[2]
+        rescue DRb::DRbConnError => e
         end
       end
     end
