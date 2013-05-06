@@ -50,8 +50,6 @@ class RingyDingy::Lookup
 
   def enumerate_tuple_spaces
     Thread.start do
-      spaces = {}
-
       loop do
         @ring_finger.lookup_ring do |tuple_space|
           yield tuple_space
@@ -113,7 +111,7 @@ class RingyDingy::Lookup
           tuple = tuple_space.read template, renewer
 
           queue.push tuple[2]
-        rescue DRb::DRbConnError => e
+        rescue DRb::DRbConnError
         end
       end
     end
