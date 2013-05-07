@@ -89,6 +89,34 @@ class TestRingyDingy < Test::Unit::TestCase
     Rinda.const_set :RingFinger, orig_ring_finger
   end
 
+  def test_initialize_broadcast_list
+    service = RingyDingy.new @object, nil, 'blah', %w[192.0.2.1]
+
+    assert_equal %w[192.0.2.1], service.ring_finger.broadcast_list
+  end
+
+  def test_initialize_lookup
+    lookup = RingyDingy::Lookup.new %w[192.0.2.1]
+    service = RingyDingy.new @object, nil, 'blah', lookup
+
+    assert_same lookup.ring_finger, service.ring_finger
+  end
+
+  def test_initialize_ring_finger
+    ring_finger = Rinda::RingFinger.new %w[192.0.2.1]
+    service = RingyDingy.new @object, nil, 'blah', ring_finger
+
+    assert_same ring_finger, service.ring_finger
+  end
+
+  def test_initialize_tuple_space
+    tuple_space = Rinda::TupleSpace.new
+    service = RingyDingy.new @object, nil, 'blah', tuple_space
+
+    assert_nil               service.ring_finger
+    assert_same tuple_space, service.ring_server
+  end
+
   def test_identifier
     assert_equal @identifier, @ringy_dingy.identifier
 

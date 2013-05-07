@@ -22,7 +22,7 @@ class RingyDingy
   ##
   # The version of RingyDingy you are using
 
-  VERSION = '1.5'
+  VERSION = '1.6'
 
   ##
   # Interval to check the RingServer for our registration information.
@@ -65,9 +65,14 @@ class RingyDingy
   ##
   # Creates a new RingyDingy that registers +object+ as +service+ with
   # optional identifier +name+.
+  #
+  # The +lookup+ is used to locate a Rinda::RingServer.  It can be unspecified
+  # (to look for a ring server in the BROADCAST_LIST), an Array of host names
+  # or IP address strings, a Rinda::RingFinger or RingyDingy::Lookup using a
+  # specific broadcast list or a reference to a Rinda::TupleSpace.
 
   def initialize object, service = :RingyDingy, name = nil,
-                 broadcast_list = BROADCAST_LIST
+                 lookup = BROADCAST_LIST
     DRb.start_service unless DRb.primary_server
 
     @identifier = [Socket.gethostname.downcase, $PID, name].compact.join '_'
@@ -77,8 +82,19 @@ class RingyDingy
     @check_every = 15
     @renewer = Rinda::SimpleRenewer.new
 
-    @ring_finger = Rinda::RingFinger.new broadcast_list
+    @ring_finger = nil
     @ring_server = nil
+
+    case lookup
+    when Array then
+      @ring_finger = Rinda::RingFinger.new lookup
+    when Rinda::RingFinger then
+      @ring_finger = lookup
+    when RingyDingy::Lookup then
+      @ring_finger = lookup.ring_finger
+    else
+      @ring_server = lookup
+    end
 
     @thread = nil
   end
