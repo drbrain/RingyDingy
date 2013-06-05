@@ -1,4 +1,4 @@
-=== 1.6 / ??
+=== 1.6 / 2013-06-05
 
 * RingyDingy.new now allows a Rinda::RingFinger or TupleSpace reference as the
   last "lookup" parameter in addition to a list of broadcast addresses.
